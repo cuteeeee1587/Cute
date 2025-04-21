@@ -1,0 +1,85 @@
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local Players = game:GetService("Players")
+
+-- Player and character setup
+local player = Players.LocalPlayer
+local playerChar = workspace:WaitForChild("HerbertStane")  -- Change to player.Character when needed
+local playerHRP = playerChar:WaitForChild("HumanoidRootPart")
+local enemiesFolder = workspace:WaitForChild("Enemys")
+local goldsFolder = workspace:WaitForChild("Golds")
+
+-- Toggle auto-clicking setup
+local clickTimer = 0
+local clickInterval = 0.05
+local clickingEnabled = true
+
+-- Transfer setup for enemies
+local transferInterval = 0.2  -- Time in seconds to wait before moving to the next target
+local transferTimer = 0
+
+-- Flag to control if the script is active
+local scriptEnabled = true
+
+-- Function to get a random alive enemy
+local function getNextTarget()
+    local aliveEnemies = {}
+    -- Collect all alive enemies
+    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+        local hrp = enemy:FindFirstChild("HumanoidRootPart")
+        local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+        if hrp and humanoid and humanoid.Health > 0 then
+            table.insert(aliveEnemies, hrp)
+        end
+    end
+
+    -- Return a random enemy if there are any
+    if #aliveEnemies > 0 then
+        return aliveEnemies[math.random(1, #aliveEnemies)]
+    end
+    return nil
+end
+
+-- Toggle script functionality with the "P" key
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if input.KeyCode == Enum.KeyCode.P then
+        scriptEnabled = not scriptEnabled
+        print("Script: " .. (scriptEnabled and "ON" or "OFF"))
+    end
+end)
+
+-- Main loop
+RunService.Heartbeat:Connect(function(dt)
+    if scriptEnabled then
+        -- Handle enemy teleportation
+        transferTimer = transferTimer + dt
+        if transferTimer >= transferInterval then
+            local targetHRP = getNextTarget()
+            if targetHRP then
+                -- Move to the target's position + some offset (e.g., 5 studs to the side)
+                playerHRP.CFrame = CFrame.new(targetHRP.Position + Vector3.new(5, 0, 0))
+            end
+            transferTimer = 0  -- Reset the timer after switching to a new target
+        end
+
+        -- Handle auto-clicking
+        if clickingEnabled then
+            clickTimer = clickTimer + dt
+            if clickTimer >= clickInterval then
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                clickTimer = 0
+            end
+        end
+
+        -- Handle gold collection
+        for _, gold in ipairs(goldsFolder:GetChildren()) do
+            if gold:IsA("BasePart") and gold.Name == "OutGold" then
+                gold.CFrame = playerHRP.CFrame * CFrame.new(0, 0, -2)  -- Move it in front of the player
+            end
+        end
+    end
+end)
