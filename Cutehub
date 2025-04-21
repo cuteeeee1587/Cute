@@ -5,7 +5,7 @@ local Players = game:GetService("Players")
 
 -- Player and character setup
 local player = Players.LocalPlayer
-local playerChar = workspace:WaitForChild("HerbertStane")  -- Change to player.Character when needed
+local playerChar = workspace:WaitForChild("Cuteeeee1587")  -- Change to player.Character when needed
 local playerHRP = playerChar:WaitForChild("HumanoidRootPart")
 local enemiesFolder = workspace:WaitForChild("Enemys")
 local goldsFolder = workspace:WaitForChild("Golds")
