@@ -1,85 +1,121 @@
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Player and character setup
+-- Settings
+local transferInterval = 0.1 -- time between teleports
+local offset = Vector3.new(5, 0, 0) -- offset next to enemy (optional)
+
+-- Skill settings
+local skillIds = {200560, 200561, 200562, 200563}
+local skillCooldown = 5 -- seconds per skill
+local lastSkillTimes = {}
+
+-- Variables
 local player = Players.LocalPlayer
-local playerChar = workspace:WaitForChild("Cuteeeee1587")  -- Change to player.Character when needed
-local playerHRP = playerChar:WaitForChild("HumanoidRootPart")
 local enemiesFolder = workspace:WaitForChild("Enemys")
-local goldsFolder = workspace:WaitForChild("Golds")
+local playerChar = player.Character or player.CharacterAdded:Wait()
+local playerHRP = playerChar:WaitForChild("HumanoidRootPart")
+local enemyDeathEvent = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("EnemyDeath")
+local playerRespirationSkillAttack = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlayerRespirationSkillAttack")
+local playerClickAttackSkill = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlayerClickAttackSkill")
 
--- Toggle auto-clicking setup
-local clickTimer = 0
-local clickInterval = 0.05
-local clickingEnabled = true
-
--- Transfer setup for enemies
-local transferInterval = 0.2  -- Time in seconds to wait before moving to the next target
+local visited = {}
+local enemyDied = true
 local transferTimer = 0
+local currentTarget = nil
+local attackCooldown = 0.01 -- attack cooldown
+local attackTimer = 0
 
--- Flag to control if the script is active
-local scriptEnabled = true
+-- Functions
+local function teleportToEnemy(enemy)
+    local hrp = enemy:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
 
--- Function to get a random alive enemy
-local function getNextTarget()
-    local aliveEnemies = {}
-    -- Collect all alive enemies
+    playerHRP.CFrame = hrp.CFrame * CFrame.new(offset)
+end
+
+local function getUnvisitedTarget()
+    local unvisited = {}
     for _, enemy in ipairs(enemiesFolder:GetChildren()) do
-        local hrp = enemy:FindFirstChild("HumanoidRootPart")
-        local humanoid = enemy:FindFirstChildOfClass("Humanoid")
-        if hrp and humanoid and humanoid.Health > 0 then
-            table.insert(aliveEnemies, hrp)
+        local enemyGuid = enemy:GetAttribute("EnemyGuid")
+        if enemyGuid and not visited[enemyGuid] then
+            table.insert(unvisited, enemy)
         end
     end
 
-    -- Return a random enemy if there are any
-    if #aliveEnemies > 0 then
-        return aliveEnemies[math.random(1, #aliveEnemies)]
+    if #unvisited == 0 then
+        visited = {}
+        return getUnvisitedTarget()
     end
-    return nil
+
+    return unvisited[math.random(1, #unvisited)]
 end
 
--- Toggle script functionality with the "P" key
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
+local function useSkillsOnEnemy(enemy)
+    local enemyGuid = enemy:GetAttribute("EnemyGuid")
+    if not enemyGuid then return end
 
-    if input.KeyCode == Enum.KeyCode.P then
-        scriptEnabled = not scriptEnabled
-        print("Script: " .. (scriptEnabled and "ON" or "OFF"))
+    -- Click attack
+    playerClickAttackSkill:FireServer({
+        ["attackEnemyGUID"] = enemyGuid
+    })
+
+    -- Skill attacks
+    for _, skillId in ipairs(skillIds) do
+        local lastUsed = lastSkillTimes[skillId] or 0
+        if tick() - lastUsed >= skillCooldown then
+            playerRespirationSkillAttack:InvokeServer({
+                ["enemyGuid"] = enemyGuid,
+                ["respirationType"] = 3,
+                ["skillId"] = skillId
+            })
+            lastSkillTimes[skillId] = tick()
+        end
     end
-end)
+end
+
+local function onEnemyDeath()
+    enemyDied = true
+end
+
+local function onCharacterRespawn(char)
+    playerChar = char
+    playerHRP = char:WaitForChild("HumanoidRootPart")
+    enemyDied = true
+    print("Respawn detected. Script continued!")
+end
+
+-- Connections
+enemyDeathEvent.OnClientEvent:Connect(onEnemyDeath)
+player.CharacterAdded:Connect(onCharacterRespawn)
 
 -- Main loop
 RunService.Heartbeat:Connect(function(dt)
-    if scriptEnabled then
-        -- Handle enemy teleportation
-        transferTimer = transferTimer + dt
-        if transferTimer >= transferInterval then
-            local targetHRP = getNextTarget()
-            if targetHRP then
-                -- Move to the target's position + some offset (e.g., 5 studs to the side)
-                playerHRP.CFrame = CFrame.new(targetHRP.Position + Vector3.new(5, 0, 0))
-            end
-            transferTimer = 0  -- Reset the timer after switching to a new target
-        end
+    if attackTimer > 0 then
+        attackTimer = attackTimer - dt -- count down attack cooldown
+    end
 
-        -- Handle auto-clicking
-        if clickingEnabled then
-            clickTimer = clickTimer + dt
-            if clickTimer >= clickInterval then
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-                clickTimer = 0
+    transferTimer += dt
+    if transferTimer >= transferInterval and enemyDied then
+        local target = getUnvisitedTarget()
+        if target then
+            teleportToEnemy(target)
+            local targetGuid = target:GetAttribute("EnemyGuid")
+            if targetGuid then
+                visited[targetGuid] = true
             end
+            enemyDied = false
+            currentTarget = target
         end
+        transferTimer = 0
+    end
 
-        -- Handle gold collection
-        for _, gold in ipairs(goldsFolder:GetChildren()) do
-            if gold:IsA("BasePart") and gold.Name == "OutGold" then
-                gold.CFrame = playerHRP.CFrame * CFrame.new(0, 0, -2)  -- Move it in front of the player
-            end
-        end
+    -- Only attack if enough time has passed
+    if currentTarget and currentTarget.Parent and attackTimer <= 0 then
+        useSkillsOnEnemy(currentTarget)
+        attackTimer = attackCooldown -- reset attack timer
+    elseif not (currentTarget and currentTarget.Parent) then
+        currentTarget = nil
     end
 end)
