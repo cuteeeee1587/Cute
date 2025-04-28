@@ -26,6 +26,7 @@ local transferTimer = 0
 local currentTarget = nil
 local attackCooldown = 0.01 -- attack cooldown
 local attackTimer = 0
+local stuckTimer = 0 -- Timer to track how long we've been stuck on the same target
 
 -- Functions
 local function teleportToEnemy(enemy)
@@ -77,12 +78,14 @@ end
 
 local function onEnemyDeath()
     enemyDied = true
+    stuckTimer = 0 -- Reset stuck timer when enemy dies
 end
 
 local function onCharacterRespawn(char)
     playerChar = char
     playerHRP = char:WaitForChild("HumanoidRootPart")
     enemyDied = true
+    stuckTimer = 0 -- Reset stuck timer upon respawn
     print("Respawn detected. Script continued!")
 end
 
@@ -97,6 +100,15 @@ RunService.Heartbeat:Connect(function(dt)
     end
 
     transferTimer += dt
+    stuckTimer += dt -- Increment stuck timer
+
+    -- Check if stuck on the same target for too long (1 second)
+    if stuckTimer > 1 and currentTarget then
+        print("Stuck on target for too long, moving to next target.")
+        enemyDied = true
+        stuckTimer = 0
+    end
+
     if transferTimer >= transferInterval and enemyDied then
         local target = getUnvisitedTarget()
         if target then
@@ -107,6 +119,7 @@ RunService.Heartbeat:Connect(function(dt)
             end
             enemyDied = false
             currentTarget = target
+            stuckTimer = 0 -- Reset stuck timer when a new target is found
         end
         transferTimer = 0
     end
