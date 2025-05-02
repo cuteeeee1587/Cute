@@ -59,7 +59,7 @@ local var = {
     reb = false,
     egg = {
       id = 0,
-      count = 3,
+      counts = 3,
       toggle = false
     },
     bh = false,
@@ -126,7 +126,7 @@ local function getChildren(path,funct)
   local function hatch()
     getChildren(workspace.Maps,function(a)
         getChildren(a.Map.Eggs,function(array)
-            game:GetService("ReplicatedStorage")["Remotes"]["ExtractHero"]:InvokeServer({["drawCardPlatformId"] = array:GetAttribute("Id"),["count"] = var.egg.count})
+            game:GetService("ReplicatedStorage")["Remotes"]["ExtractHero"]:InvokeServer({["drawCardPlatformId"] = array:GetAttribute("Id"),["count"] = var.egg.counts})
         end)
     end)
   end
