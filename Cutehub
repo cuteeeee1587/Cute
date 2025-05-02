@@ -9,7 +9,7 @@ local Serika = {
 		}
 
 local wndw = mod:Create{
-    Name = "Cuteeeee HUB <3",
+    Name = "CUTE HUB",
     Size = UDim2.fromOffset(600, 400),
     Theme = Serika,  -- Use manually defined Aqua theme
 }
@@ -610,5 +610,130 @@ local toggleScript = T1:Toggle{
         end
     end
 }
+
+-- This will control if the process is enabled
+local firingEnabled = false -- Default is disabled
+
+-- Your Map and Point ID Data
+local mapPoints = {
+    [50001] = {"171001", "171002", "171003", "171004", "171005"},
+    [50002] = {"172001", "172002", "172003", "172004", "172005"},
+    [50003] = {"173001", "173002", "173003", "173004", "173005"},
+    [50004] = {"174001", "174002", "174003", "174004", "174005"},
+    [50005] = {"175001", "175002", "175003", "175004", "175005"},
+    [50006] = {"176001", "176002", "176003", "176004", "176005"},
+    [50008] = {"171001", "171002", "171003", "171004", "171005"},
+    [50009] = {"172001", "172002", "172003", "172004", "172005"}
+}
+
+-- Function to start firing
+local function startFiring()
+    for mapId, pointIds in pairs(mapPoints) do
+        if not firingEnabled then
+            break -- Stop if firing gets disabled
+        end
+        for _, pointId in ipairs(pointIds) do
+            if not firingEnabled then
+                break
+            end
+            local args = {
+                [1] = {
+                    ["mapId"] = mapId,
+                    ["pointId"] = pointId
+                }
+            }
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("GetBoxGift"):FireServer(unpack(args))
+            print("Fired: mapId =", mapId, "pointId =", pointId)
+            wait(0.1) -- Small delay between fires
+        end
+    end
+    print("Firing process finished or stopped.")
+end
+
+-- Function to toggle the firing
+local function toggleFiring(value)
+    firingEnabled = value
+    if value then
+        print("Firing Enabled.")
+        startFiring()
+    else
+        print("Firing Disabled.")
+    end
+end
+
+-- GUI Toggle (T1)
+T1:Toggle{
+    Name = "Auto Pumpkin",
+    StartingState = firingEnabled,
+    Description = "Automatically fire GetBoxGift remotes.",
+    Callback = toggleFiring
+}
+
+
+-- Unlimited Diamond Toggle (T2)
+do
+	local unlimitedDiamondRunning = false
+
+T2:Toggle{
+		Name = "Unlimited Diamond",
+		StartingState = false,
+		Description = "YOU SHOULD BE IN MAP 5",
+		Callback = function(state)
+			unlimitedDiamondRunning = state
+			if state then
+				task.spawn(function()
+					while unlimitedDiamondRunning do
+						local args = {
+							{
+								haloType = 3,
+								count = 1
+							}
+						}
+
+						game:GetService("ReplicatedStorage")
+							:WaitForChild("Remotes")
+							:WaitForChild("ExchangeHaloDrawItem")
+							:InvokeServer(unpack(args))
+
+						task.wait(0.1)
+					end
+				end)
+			end
+		end
+	}
+end
+
+-- Auto SPIN
+
+
+-- Auto Spin Diamond Key Toggle (T3)
+do
+	local autoSpinRunning = false
+
+	T2:Toggle{
+		Name = "Auto Spin Diamond Key",
+		StartingState = false,
+		Description = "Automatically rerolls the halo using diamond keys.",
+		Callback = function(state)
+			autoSpinRunning = state
+			if state then
+				task.spawn(function()
+					while autoSpinRunning do
+						local args = {
+							[1] = 3
+						}
+
+						game:GetService("ReplicatedStorage")
+							:WaitForChild("Remotes")
+							:WaitForChild("RerollHalo")
+							:InvokeServer(unpack(args))
+
+						task.wait(0.1)
+					end
+				end)
+			end
+		end
+	}
+end
 
 
