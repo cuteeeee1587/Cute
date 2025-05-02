@@ -686,7 +686,7 @@ T2:Toggle{
 						local args = {
 							{
 								haloType = 3,
-								count = 1
+								count = 0
 							}
 						}
 
