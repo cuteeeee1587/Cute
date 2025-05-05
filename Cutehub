@@ -555,4 +555,15 @@ T3:Button{
 }
 
 
+-- Rejoin
+
+T3:Button{
+	Name = "Rejoin Server",
+	Description = nil,
+	Callback = function()
+		local TeleportService = game:GetService("TeleportService")
+		local Players = game:GetService("Players")
+		TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
+	end
+}
 
