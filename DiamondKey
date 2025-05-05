@@ -1,0 +1,12 @@
+while true do
+    local args = {
+        {
+            haloType = 3,
+            count = 0
+        }
+    }
+
+    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ExchangeHaloDrawItem"):InvokeServer(unpack(args))
+    
+    task.wait(0.1) 
+end
