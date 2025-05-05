@@ -1,8 +1,12 @@
-if getgenv().AutoFarmV2Running then
+-- Stop existing loop if already running
+if getgenv().AutoFarmV2Connection then
     getgenv().AutoFarmV2Running = false
+    getgenv().AutoFarmV2Connection:Disconnect()
+    getgenv().AutoFarmV2Connection = nil
     return
 end
 
+-- Start new loop
 getgenv().AutoFarmV2Running = true
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,34 +18,34 @@ local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- Settings
 local teleportDistance = 5
 local attackInterval = 0.01
 
--- Loop to teleport and attack enemies
-task.spawn(function()
-    while getgenv().AutoFarmV2Running and task.wait(attackInterval) do
-        local enemies = workspace:FindFirstChild("Enemys")
-        if enemies then
-            for _, enemy in pairs(enemies:GetChildren()) do
-                if enemy and enemy:IsA("Model") and not string.find(enemy.Name, "Roger") then
-                    local enemyRootPart = enemy:FindFirstChild("HumanoidRootPart")
-                    if enemyRootPart then
-                        local newPosition = humanoidRootPart.Position + humanoidRootPart.CFrame.LookVector * teleportDistance
-                        enemyRootPart.CFrame = CFrame.new(newPosition)
+-- Heartbeat-based loop that can be disconnected
+getgenv().AutoFarmV2Connection = game:GetService("RunService").Heartbeat:Connect(function()
+    if not getgenv().AutoFarmV2Running then return end
 
-                        local enemyGUID = enemy:GetAttribute("EnemyGuid")
-                        if enemyGUID then
-                            local args = {
-                                [1] = {
-                                    ["attackEnemyGUID"] = enemyGUID
-                                }
+    local enemies = workspace:FindFirstChild("Enemys")
+    if enemies then
+        for _, enemy in pairs(enemies:GetChildren()) do
+            if enemy and enemy:IsA("Model") and not string.find(enemy.Name, "Roger") then
+                local enemyRootPart = enemy:FindFirstChild("HumanoidRootPart")
+                if enemyRootPart then
+                    local newPosition = humanoidRootPart.Position + humanoidRootPart.CFrame.LookVector * teleportDistance
+                    enemyRootPart.CFrame = CFrame.new(newPosition)
+
+                    local enemyGUID = enemy:GetAttribute("EnemyGuid")
+                    if enemyGUID then
+                        local args = {
+                            [1] = {
+                                ["attackEnemyGUID"] = enemyGUID
                             }
-                            PlayerClickAttackSkill:FireServer(unpack(args))
-                        end
+                        }
+                        PlayerClickAttackSkill:FireServer(unpack(args))
                     end
                 end
             end
         end
     end
+    task.wait(attackInterval)
 end)
