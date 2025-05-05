@@ -9,7 +9,7 @@ local Serika = {
 		}
 
 local wndw = mod:Create{
-    Name = "CUTE HUB",
+    Name = "Cuteeeee HUB <3",
     Size = UDim2.fromOffset(600, 400),
     Theme = Serika,  -- Use manually defined Aqua theme
 }
@@ -20,19 +20,19 @@ local T1 = wndw:Tab{
 }
 
 local T2 = wndw:Tab{
-    Name = "Hatch",
+    Name = "Auto Farm",
     Icon = "rbxassetid://8569322835"
 }
 
 
-local T5 = wndw:Tab{
+local T3 = wndw:Tab{
     Name = "Teleport",
     Icon = "rbxassetid://8569322835"
 }
 
 
-local T6 = wndw:Tab{
-    Name = "Machineee",
+local T4 = wndw:Tab{
+    Name = "Machineee and Egg",
     Icon = "rbxassetid://8569322835"
 }
 
@@ -59,7 +59,7 @@ local var = {
     reb = false,
     egg = {
       id = 0,
-      counts = 3,
+      count = 3,
       toggle = false
     },
     bh = false,
@@ -126,14 +126,14 @@ local function getChildren(path,funct)
   local function hatch()
     getChildren(workspace.Maps,function(a)
         getChildren(a.Map.Eggs,function(array)
-            game:GetService("ReplicatedStorage")["Remotes"]["ExtractHero"]:InvokeServer({["drawCardPlatformId"] = array:GetAttribute("Id"),["count"] = var.egg.counts})
+            game:GetService("ReplicatedStorage")["Remotes"]["ExtractHero"]:InvokeServer({["drawCardPlatformId"] = array:GetAttribute("Id"),["count"] = var.egg.count})
         end)
     end)
   end
 
   
 
-  T6:Toggle{
+  T4:Toggle{
     Name = "Reroll Amplification",
     StartingState = false,
     Description = nil,
@@ -149,7 +149,7 @@ local function getChildren(path,funct)
     end
 }
 
-T6:Toggle{
+T4:Toggle{
     Name = "Reroll Awakening",
     StartingState = false,
     Description = nil,
@@ -165,7 +165,7 @@ T6:Toggle{
     end
 }
 
-T6:Toggle{
+T4:Toggle{
     Name = "Reroll Talisman",
     StartingState = false,
     Description = nil,
@@ -183,7 +183,7 @@ T6:Toggle{
 
 
 
- T1:Toggle{
+ T2:Toggle{
     Name = "Auto click",
     StartingState = false,
     Description = nil,
@@ -201,7 +201,7 @@ T6:Toggle{
 }
  
 
-T1:Toggle{
+T2:Toggle{
     Name = "Auto collect dropped items",
     StartingState = false,
     Description = nil,
@@ -304,21 +304,10 @@ T1:Toggle{
     end
 }
 
-
-T2:Slider{
-    Name = "Hatch amount",
-    Default = 3,
-    Min = 1,
-    Max = 10,
-    Callback = function(value)
-        var.egg.id = value
-    end
-}
-
-T2:Toggle{
+T4:Toggle{
     Name = "Auto Hatch",
     StartingState = false,
-    Description = nil,
+    Description = "Hatch nearest EGG",
     Callback = function(value)
         var.egg.toggle = value
         while wait() do
@@ -328,7 +317,7 @@ T2:Toggle{
     end
 }
 
-T2:Toggle{
+T1:Toggle{
     Name = "Auto equip best hero every 1s",
     StartingState = false,
     Description = nil,
@@ -346,7 +335,7 @@ T2:Toggle{
 }
 
 
-T5:Dropdown{
+T3:Dropdown{
     Name = "Select map ID",
     StartingText = "Select...",
     Description = nil,
@@ -373,7 +362,7 @@ T5:Dropdown{
 }
 
 
-T5:Button{
+T3:Button{
 	Name = "Teleport to a selected map",
 	Description = nil,
 	Callback = function()
@@ -381,7 +370,7 @@ T5:Button{
 	end
 }
 
-T5:Button{
+T3:Button{
 	Name = "Join Dungeon [ Bypass cooldown ]",
 	Description = nil,
 	Callback = function()
@@ -389,7 +378,7 @@ T5:Button{
 	end
 }
 
-T5:Button{
+T3:Button{
 	Name = "Join Tower [ Bypass cooldown ]",
 	Description = nil,
 	Callback = function()
@@ -397,7 +386,7 @@ T5:Button{
 	end
 }
 
-T5:Button{
+T3:Button{
 	Name = "Join Relic [ Bypass cooldown ]",
 	Description = nil,
 	Callback = function()
@@ -450,258 +439,47 @@ T1:Toggle{
     Callback = toggleAntiAfk
 }
 
-
-local isScriptEnabled = false  -- Track if the script is enabled
-local heartbeatConnection
-local connections = {}
-
-local function startCustomScript()
-    -- This function will start the custom script
-    
-    local RunService = game:GetService("RunService")
-    local Players = game:GetService("Players")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-    -- Settings
-    local transferInterval = 0.1
-    local offset = Vector3.new(5, 0, 0)
-    local skillIds = {200560, 200561, 200562, 200563}
-    local skillCooldown = 5
-    local lastSkillTimes = {}
-
-    local player = Players.LocalPlayer
-    local enemiesFolder = workspace:WaitForChild("Enemys")
-    local playerChar = player.Character or player.CharacterAdded:Wait()
-    local playerHRP = playerChar:WaitForChild("HumanoidRootPart")
-    local enemyDeathEvent = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("EnemyDeath")
-    local playerRespirationSkillAttack = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlayerRespirationSkillAttack")
-    local playerClickAttackSkill = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlayerClickAttackSkill")
-
-    local visited = {}
-    local enemyDied = true
-    local transferTimer = 0
-    local currentTarget = nil
-    local attackCooldown = 0.01
-    local attackTimer = 0
-    local stuckTimer = 0
-
-    -- Functions
-    local function teleportToEnemy(enemy)
-        local hrp = enemy:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        playerHRP.CFrame = hrp.CFrame * CFrame.new(offset)
-    end
-
-    local function getUnvisitedTarget()
-        local unvisited = {}
-        for _, enemy in ipairs(enemiesFolder:GetChildren()) do
-            local enemyGuid = enemy:GetAttribute("EnemyGuid")
-            if enemyGuid and not visited[enemyGuid] then
-                table.insert(unvisited, enemy)
-            end
-        end
-        if #unvisited == 0 then
-            visited = {}
-            return getUnvisitedTarget()
-        end
-        return unvisited[math.random(1, #unvisited)]
-    end
-
-    local function useSkillsOnEnemy(enemy)
-        local enemyGuid = enemy:GetAttribute("EnemyGuid")
-        if not enemyGuid then return end
-        playerClickAttackSkill:FireServer({
-            ["attackEnemyGUID"] = enemyGuid
-        })
-        for _, skillId in ipairs(skillIds) do
-            local lastUsed = lastSkillTimes[skillId] or 0
-            if tick() - lastUsed >= skillCooldown then
-                playerRespirationSkillAttack:InvokeServer({
-                    ["enemyGuid"] = enemyGuid,
-                    ["respirationType"] = 3,
-                    ["skillId"] = skillId
-                })
-                lastSkillTimes[skillId] = tick()
-            end
-        end
-    end
-
-    local function onEnemyDeath()
-        enemyDied = true
-        stuckTimer = 0
-    end
-
-    local function onCharacterRespawn(char)
-        playerChar = char
-        playerHRP = char:WaitForChild("HumanoidRootPart")
-        enemyDied = true
-        stuckTimer = 0
-        print("Respawn detected. Script continued!")
-    end
-
-    -- Connections
-    local deathConnection = enemyDeathEvent.OnClientEvent:Connect(onEnemyDeath)
-    local respawnConnection = player.CharacterAdded:Connect(onCharacterRespawn)
-    table.insert(connections, deathConnection)
-    table.insert(connections, respawnConnection)
-
-    -- Main loop
-    heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
-        if attackTimer > 0 then
-            attackTimer = attackTimer - dt
-        end
-        transferTimer += dt
-        stuckTimer += dt
-
-        if stuckTimer > 1 and currentTarget then
-            print("Stuck on target for too long, moving to next target.")
-            enemyDied = true
-            stuckTimer = 0
-        end
-
-        if transferTimer >= transferInterval and enemyDied then
-            local target = getUnvisitedTarget()
-            if target then
-                teleportToEnemy(target)
-                local targetGuid = target:GetAttribute("EnemyGuid")
-                if targetGuid then
-                    visited[targetGuid] = true
-                end
-                enemyDied = false
-                currentTarget = target
-                stuckTimer = 0
-            end
-            transferTimer = 0
-        end
-
-        if currentTarget and currentTarget.Parent and attackTimer <= 0 then
-            useSkillsOnEnemy(currentTarget)
-            attackTimer = attackCooldown
-        elseif not (currentTarget and currentTarget.Parent) then
-            currentTarget = nil
-        end
-    end)
-    table.insert(connections, heartbeatConnection)
-end
-
-local function stopCustomScript()
-    -- Disconnect all connections and cleanup
-    for _, connection in ipairs(connections) do
-        if connection.Disconnect then
-            connection:Disconnect()
-        end
-    end
-    connections = {}  -- Clear out connections
-    print("Custom script disabled.")
-end
-
-local toggleScript = T1:Toggle{
-    Name = "Auto Farm",
+local toggleScript = T2:Toggle{
+    Name = "Auto Farm V1",
     StartingState = isScriptEnabled,
-    Description = "Toggle to enable or disable the custom script.",
-    Callback = function(value)
-        isScriptEnabled = value
-        
+    Description = "TELEPORT TO ENEMY",
+    Callback = function(state)
+        isScriptEnabled = state
         if isScriptEnabled then
-            startCustomScript()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/cuteeeee1587/Cute/refs/heads/main/AutoFarmV1"))()
             print("Custom script enabled.")
         else
-            stopCustomScript()
-        end
-    end
-}
-
--- This will control if the process is enabled
-local firingEnabled = false -- Default is disabled
-
--- Your Map and Point ID Data
-local mapPoints = {
-    [50001] = {"171001", "171002", "171003", "171004", "171005"},
-    [50002] = {"172001", "172002", "172003", "172004", "172005"},
-    [50003] = {"173001", "173002", "173003", "173004", "173005"},
-    [50004] = {"174001", "174002", "174003", "174004", "174005"},
-    [50005] = {"175001", "175002", "175003", "175004", "175005"},
-    [50006] = {"176001", "176002", "176003", "176004", "176005"},
-    [50008] = {"171001", "171002", "171003", "171004", "171005"},
-    [50009] = {"172001", "172002", "172003", "172004", "172005"}
-}
-
--- Function to start firing
-local function startFiring()
-    for mapId, pointIds in pairs(mapPoints) do
-        if not firingEnabled then
-            break -- Stop if firing gets disabled
-        end
-        for _, pointId in ipairs(pointIds) do
-            if not firingEnabled then
-                break
+            -- Properly handle stopping the script when toggling off
+            getgenv().isScriptEnabled = false
+            if getgenv().CustomScriptConnection then
+                getgenv().CustomScriptConnection:Disconnect()
+                getgenv().CustomScriptConnection = nil
+                print("Custom script disabled.")
             end
-            local args = {
-                [1] = {
-                    ["mapId"] = mapId,
-                    ["pointId"] = pointId
-                }
-            }
-            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("GetBoxGift"):FireServer(unpack(args))
-            print("Fired: mapId =", mapId, "pointId =", pointId)
-            wait(0.1) -- Small delay between fires
         end
     end
-    print("Firing process finished or stopped.")
-end
+}
 
--- Function to toggle the firing
-local function toggleFiring(value)
-    firingEnabled = value
-    if value then
-        print("Firing Enabled.")
-        startFiring()
-    else
-        print("Firing Disabled.")
-    end
-end
 
--- GUI Toggle (T1)
 T1:Toggle{
     Name = "Auto Pumpkin",
-    StartingState = firingEnabled,
-    Description = "Automatically fire GetBoxGift remotes.",
-    Callback = toggleFiring
+    StartingState = false,
+    Description = "AUTOMATICALLY GET PUMPKIN BOX FROM ALL MAPS",
+    Callback = function(state)
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/cuteeeee1587/Cute/refs/heads/main/AutoPumpkin"))()
+    end
 }
 
-
 -- Unlimited Diamond Toggle (T2)
-do
-	local unlimitedDiamondRunning = false
+T1:Toggle{
+	Name = "Unlimited Diamond",
+	StartingState = false,
+	Description = "YOU SHOULD BE IN MAP 5",
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/cuteeeee1587/Cute/refs/heads/main/DiamondKey"))()
+	end
+}
 
-T2:Toggle{
-		Name = "Unlimited Diamond",
-		StartingState = false,
-		Description = "YOU SHOULD BE IN MAP 5",
-		Callback = function(state)
-			unlimitedDiamondRunning = state
-			if state then
-				task.spawn(function()
-					while unlimitedDiamondRunning do
-						local args = {
-							{
-								haloType = 3,
-								count = 0
-							}
-						}
-
-						game:GetService("ReplicatedStorage")
-							:WaitForChild("Remotes")
-							:WaitForChild("ExchangeHaloDrawItem")
-							:InvokeServer(unpack(args))
-
-						task.wait(0.1)
-					end
-				end)
-			end
-		end
-	}
-end
 
 -- Auto SPIN
 
@@ -710,7 +488,7 @@ end
 do
 	local autoSpinRunning = false
 
-	T2:Toggle{
+	T1:Toggle{
 		Name = "Auto Spin Diamond Key",
 		StartingState = false,
 		Description = "Automatically rerolls the halo using diamond keys.",
@@ -735,5 +513,17 @@ do
 		end
 	}
 end
+
+--- 
+
+	T2:Toggle{
+		Name = "AUTO FARM v2",
+		StartingState = false,
+		Description = "TELEPORT THE ENEMY IN FRONT OF YOU",
+        Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/cuteeeee1587/Cute/refs/heads/main/AutofarmV2"))()
+	end
+}
+
 
 
