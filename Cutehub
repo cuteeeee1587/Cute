@@ -525,5 +525,34 @@ end
 	end
 }
 
+T3:Button{
+	Name = "Server Hop",
+	Description = nil,
+	Callback = function()
+		local TeleportService = game:GetService("TeleportService")
+		local HttpService = game:GetService("HttpService")
+		local PlaceId = game.PlaceId
+		local CurrentJobId = game.JobId
+
+		local success, servers = pcall(function()
+			local response = game:HttpGetAsync(
+				"https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
+			)
+			return HttpService:JSONDecode(response)
+		end)
+
+		if success and servers and servers.data then
+			for _, server in ipairs(servers.data) do
+				if server.playing < server.maxPlayers and server.id ~= CurrentJobId then
+					TeleportService:TeleportToPlaceInstance(PlaceId, server.id)
+					return
+				end
+			end
+		else
+			warn("Failed to retrieve servers")
+		end
+	end
+}
+
 
 
