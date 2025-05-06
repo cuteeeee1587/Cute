@@ -525,7 +525,6 @@ end
 	end
 }
 
-
 T3:Button{
 	Name = "Server Hop",
 	Description = nil,
@@ -596,5 +595,46 @@ T3:Button{
 			warn("Failed to retrieve servers")
 		end
 	end
+}
+
+T3:Toggle{
+    Name = "Auto Dungeon",
+    StartingState = false,
+    Description = nil,
+    Callback = function(value)
+        local canTeleport = true
+        local isTeleportEnabled = value
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local TeleportRemote = ReplicatedStorage.Remotes.LocalPlayerTeleport
+        local TowerFolder = workspace:WaitForChild("Maps"):WaitForChild("Map3"):WaitForChild("Map"):WaitForChild("TeleportPoints"):WaitForChild("Tower")
+
+        TowerFolder.ChildAdded:Connect(function(child)
+            if isTeleportEnabled and child:IsA("Model") and child.Name == "TowerUnlock" and canTeleport then
+                TeleportRemote:FireServer({["mapId"] = 50016})
+                canTeleport = false
+            end
+        end)
+
+        TowerFolder.ChildRemoved:Connect(function(child)
+            if child:IsA("Model") and child.Name == "TowerUnlock" then
+                canTeleport = true
+            end
+        end)
+    end
+}
+
+T2:Slider{
+    Name = "Movement Speed",
+    Default = 60,
+    Min = 0,
+    Max = 500,
+    Callback = function(value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:WaitForChild("Humanoid")
+        
+        -- Set the humanoid's WalkSpeed to the slider value
+        humanoid.WalkSpeed = value
+    end
 }
 
