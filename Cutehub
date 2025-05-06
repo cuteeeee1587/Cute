@@ -600,7 +600,7 @@ T3:Button{
 T3:Toggle{
     Name = "Auto Dungeon",
     StartingState = false,
-    Description = nil,
+    Description = "Must be in Map 3",
     Callback = function(value)
         local canTeleport = true
         local isTeleportEnabled = value
