@@ -1,25 +1,50 @@
-_G.ToggleAutoFarm = _G.ToggleAutoFarm or false
+-- Only define thread variable once
+_G.AutoFarmThread = _G.AutoFarmThread or nil
 
-task.spawn(function()
-	while _G.ToggleAutoFarm do
-		for _, enemyModel in ipairs(workspace:WaitForChild("Enemys"):GetChildren()) do
-			local enemyGuid = enemyModel:GetAttribute("EnemyGuid")
-			local enemyPos = enemyModel:FindFirstChild("HumanoidRootPart") and enemyModel.HumanoidRootPart.Position
+local function startAutoFarm()
+    if _G.AutoFarmThread then return end -- prevent duplicate thread
 
-			if enemyGuid and enemyPos then
-				game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ClickEnemy"):InvokeServer({
-					enemyGuid = enemyGuid,
-					enemyPos = enemyPos
-				})
-			end
+    _G.AutoFarmThread = task.spawn(function()
+        local RunService = game:GetService("RunService")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local EnemiesFolder = workspace:WaitForChild("Enemys")
 
-			if enemyGuid then
-				game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("PlayerClickAttackSkill"):FireServer({
-					attackEnemyGUID = enemyGuid
-				})
-			end
-		end
+        local ClickEnemyRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ClickEnemy")
+        local PlayerClickAttackSkillRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlayerClickAttackSkill")
 
-		game:GetService("RunService").Heartbeat:Wait()
-	end
-end)
+        while _G.ToggleAutoFarm do
+            for _, enemyModel in ipairs(EnemiesFolder:GetChildren()) do
+                local enemyGuid = enemyModel:GetAttribute("EnemyGuid")
+                local hrp = enemyModel:FindFirstChild("HumanoidRootPart")
+
+                if enemyGuid and hrp then
+                    ClickEnemyRemote:InvokeServer({
+                        enemyGuid = enemyGuid,
+                        enemyPos = hrp.Position
+                    })
+
+                    PlayerClickAttackSkillRemote:FireServer({
+                        attackEnemyGUID = enemyGuid
+                    })
+                end
+            end
+
+            RunService.Heartbeat:Wait()
+        end
+
+        _G.AutoFarmThread = nil -- clear when finished
+    end)
+end
+
+-- GUI Toggle logic
+Tab:Toggle{
+    Name = "Auto Farm",
+    StartingState = false,
+    Callback = function(state)
+        _G.ToggleAutoFarm = state
+
+        if state then
+            startAutoFarm() -- restart loop
+        end
+    end
+}
