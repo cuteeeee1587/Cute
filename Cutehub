@@ -36,6 +36,11 @@ local T4 = wndw:Tab{
     Icon = "rbxassetid://8569322835"
 }
 
+local T5 = wndw:Tab{
+    Name = "Mount",
+    Icon = "rbxassetid://8569322835"
+}
+
 
 local player = game.Players.LocalPlayer
 local playerChar = workspace:WaitForChild(player.Name)
@@ -637,4 +642,127 @@ T2:Slider{
         humanoid.WalkSpeed = value
     end
 }
+
+
+T5:Button{
+	Name = "Space Ship",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100001
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Deep Sea",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100002
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Flying Leaves",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100003
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Hamburger",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100004
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Dragon",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100005
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Cloud",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100006
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Dreamy Light Wheel",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100007
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Rubber Dukiro",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100008
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Frigate",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100009
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Blue Flash",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100010
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
+T5:Button{
+	Name = "Egg Cart",
+	Description = nil,
+	Callback = function()
+		local args = {
+			100011
+		}
+		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
+	end
+}
+
 
