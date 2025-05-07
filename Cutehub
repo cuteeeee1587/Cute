@@ -444,26 +444,20 @@ T1:Toggle{
     Callback = toggleAntiAfk
 }
 
-local toggleScript = T2:Toggle{
-    Name = "Auto Farm V1",
-    StartingState = isScriptEnabled,
-    Description = "TELEPORT TO ENEMY",
-    Callback = function(state)
-        isScriptEnabled = state
-        if isScriptEnabled then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/cuteeeee1587/Cute/refs/heads/main/AutoFarmV1"))()
-            print("Custom script enabled.")
-        else
-            -- Properly handle stopping the script when toggling off
-            getgenv().isScriptEnabled = false
-            if getgenv().CustomScriptConnection then
-                getgenv().CustomScriptConnection:Disconnect()
-                getgenv().CustomScriptConnection = nil
-                print("Custom script disabled.")
-            end
-        end
-    end
+local loaded = false
+
+T2:Toggle{
+	Name = "Auto Farm V1",
+	StartingState = false,
+	Callback = function(state)
+		_G.ToggleAutoFarm = state
+
+		if state then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/cuteeeee1587/Cute/refs/heads/main/AutoFarmV1"))()
+		end
+	end
 }
+
 
 
 T1:Toggle{
@@ -764,5 +758,3 @@ T5:Button{
 		game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipMount"):FireServer(unpack(args))
 	end
 }
-
-
