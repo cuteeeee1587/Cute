@@ -1,50 +1,33 @@
--- Only define thread variable once
-_G.AutoFarmThread = _G.AutoFarmThread or nil
 
-local function startAutoFarm()
-    if _G.AutoFarmThread then return end -- prevent duplicate thread
+if _G.AutoFarmThread then return end -- prevent duplicate threads
 
-    _G.AutoFarmThread = task.spawn(function()
-        local RunService = game:GetService("RunService")
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local EnemiesFolder = workspace:WaitForChild("Enemys")
+_G.AutoFarmThread = task.spawn(function()
+	local RunService = game:GetService("RunService")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local EnemiesFolder = workspace:WaitForChild("Enemys")
 
-        local ClickEnemyRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ClickEnemy")
-        local PlayerClickAttackSkillRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlayerClickAttackSkill")
+	local ClickEnemyRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ClickEnemy")
+	local PlayerClickAttackSkillRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlayerClickAttackSkill")
 
-        while _G.ToggleAutoFarm do
-            for _, enemyModel in ipairs(EnemiesFolder:GetChildren()) do
-                local enemyGuid = enemyModel:GetAttribute("EnemyGuid")
-                local hrp = enemyModel:FindFirstChild("HumanoidRootPart")
+	while _G.ToggleAutoFarm do
+		for _, enemyModel in ipairs(EnemiesFolder:GetChildren()) do
+			local enemyGuid = enemyModel:GetAttribute("EnemyGuid")
+			local hrp = enemyModel:FindFirstChild("HumanoidRootPart")
 
-                if enemyGuid and hrp then
-                    ClickEnemyRemote:InvokeServer({
-                        enemyGuid = enemyGuid,
-                        enemyPos = hrp.Position
-                    })
+			if enemyGuid and hrp then
+				ClickEnemyRemote:InvokeServer({
+					enemyGuid = enemyGuid,
+					enemyPos = hrp.Position
+				})
 
-                    PlayerClickAttackSkillRemote:FireServer({
-                        attackEnemyGUID = enemyGuid
-                    })
-                end
-            end
+				PlayerClickAttackSkillRemote:FireServer({
+					attackEnemyGUID = enemyGuid
+				})
+			end
+		end
 
-            RunService.Heartbeat:Wait()
-        end
+		RunService.Heartbeat:Wait()
+	end
 
-        _G.AutoFarmThread = nil -- clear when finished
-    end)
-end
-
--- GUI Toggle logic
-Tab:Toggle{
-    Name = "Auto Farm",
-    StartingState = false,
-    Callback = function(state)
-        _G.ToggleAutoFarm = state
-
-        if state then
-            startAutoFarm() -- restart loop
-        end
-    end
-}
+	_G.AutoFarmThread = nil -- clear so it can restart
+end)
