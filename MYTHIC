@@ -1,0 +1,152 @@
+
+local modelNames = {"Roger", "Kurama", "Muzan"}  -- Models to search for (multiple models)
+local playerCharName = "Cuteeeee1587"  -- The player's character name
+local mapIds = {50001, 50002, 50003, 50004, 50005, 50006, 50007, 50008, 50009, 50010}  -- Map IDs
+
+-- Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local teleportRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("LocalPlayerTeleport")
+local localPlayer = Players.LocalPlayer
+
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ModelCheckerGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 300, 0, 200)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.Parent = screenGui
+
+-- Start Model Search Button
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 200, 0, 50)
+button.Position = UDim2.new(0.5, -100, 0.5, -25)
+button.Text = "MYTHIC BOSS"
+button.Font = Enum.Font.SourceSansBold
+button.TextSize = 20
+button.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
+button.TextColor3 = Color3.new(1, 1, 1)
+button.Parent = mainFrame
+
+-- Server Hop Button
+local hopButton = Instance.new("TextButton")
+hopButton.Size = UDim2.new(0, 200, 0, 40)
+hopButton.Position = UDim2.new(0.5, -100, 1, -50)
+hopButton.Text = "Server Hop"
+hopButton.Font = Enum.Font.SourceSansBold
+hopButton.TextSize = 20
+hopButton.BackgroundColor3 = Color3.fromRGB(200, 100, 50)
+hopButton.TextColor3 = Color3.new(1, 1, 1)
+hopButton.Parent = mainFrame
+
+-- Status Label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(0, 300, 0, 40)
+statusLabel.Position = UDim2.new(0.5, -150, 0, 10)
+statusLabel.Text = "Status: Idle"
+statusLabel.Font = Enum.Font.SourceSans
+statusLabel.TextSize = 18
+statusLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+statusLabel.TextColor3 = Color3.new(1, 1, 1)
+statusLabel.BorderSizePixel = 0
+statusLabel.Parent = mainFrame
+
+-- Minimize Button
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 50, 0, 30)
+minimizeButton.Position = UDim2.new(1, -60, 0, 10)
+minimizeButton.Text = "_"
+minimizeButton.Font = Enum.Font.SourceSansBold
+minimizeButton.TextSize = 20
+minimizeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+minimizeButton.TextColor3 = Color3.new(1, 1, 1)
+minimizeButton.Parent = mainFrame
+
+local isMinimized = false
+minimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    mainFrame.Size = UDim2.new(0, 300, 0, isMinimized and 40 or 200)
+    statusLabel.Visible = not isMinimized
+    button.Visible = not isMinimized
+    hopButton.Visible = not isMinimized
+    minimizeButton.Text = isMinimized and "+" or "_"
+end)
+
+-- Server Hop Function
+local function hopToNewServer()
+    local placeId = game.PlaceId
+    local currentJobId = game.JobId
+
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"))
+    end)
+
+    if success and result and result.data then
+        for _, server in ipairs(result.data) do
+            if server.playing < server.maxPlayers and server.id ~= currentJobId then
+                statusLabel.Text = "🔁 Hopping to new server..."
+                TeleportService:TeleportToPlaceInstance(placeId, server.id, localPlayer)
+                return
+            end
+        end
+    end
+
+    statusLabel.Text = "❌ No new server found"
+end
+
+hopButton.MouseButton1Click:Connect(hopToNewServer)
+
+-- Model Search Function
+local function findAndTeleportToModels()
+    local foundModels = {}
+
+    -- Initialize the found models tracker
+    for _, name in ipairs(modelNames) do
+        foundModels[name] = false
+    end
+
+    -- Loop through all the maps
+    for i, mapId in ipairs(mapIds) do
+        statusLabel.Text = "🌍 Teleporting to Map " .. i
+        teleportRemote:FireServer({["mapId"] = mapId})
+        task.wait(1.5)  -- Wait for teleportation to complete
+
+        local enemysFolder = workspace:FindFirstChild("Enemys") or workspace:WaitForChild("Enemys", 5)
+        if enemysFolder then
+            -- Loop through the model names and check for each one
+            for _, name in ipairs(modelNames) do
+                if not foundModels[name] then  -- Only search if model hasn't been found
+                    for _, model in ipairs(enemysFolder:GetChildren()) do
+                        if model:IsA("Model") and string.find(model.Name, name) then
+                            if model:FindFirstChild("HumanoidRootPart") then
+                                local playerChar = workspace:FindFirstChild(playerCharName)
+                                if playerChar and playerChar:FindFirstChild("HumanoidRootPart") then
+                                    local targetPos = model.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                                    playerChar.HumanoidRootPart.CFrame = targetPos
+
+                                    foundModels[name] = true
+                                    statusLabel.Text = "✅ Teleported to " .. name .. " in Map " .. i
+                                    task.wait(5)  -- Wait for 5 seconds after teleporting
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        task.wait(0.5)  -- Wait before continuing to the next map
+    end
+
+    statusLabel.Text = "✅ Finished checking all maps"
+end
+
+button.MouseButton1Click:Connect(findAndTeleportToModels)
