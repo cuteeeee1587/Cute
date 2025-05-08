@@ -1,6 +1,6 @@
 
 local modelNames = {"Roger", "Kurama", "Muzan"}  -- Models to search for (multiple models)
-local playerCharName = "Cuteeeee1587"  -- The player's character name
+local playerCharName = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
 local mapIds = {50001, 50002, 50003, 50004, 50005, 50006, 50007, 50008, 50009, 50010}  -- Map IDs
 
 -- Services
