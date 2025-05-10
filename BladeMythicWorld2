@@ -1,5 +1,5 @@
 -- Config
-local targetNames = {"Muzan", "Roger", "Kurama"}
+local targetNames = {"Kurama", "Roger", "Muzan"}
 local player = game.Players.LocalPlayer
 local char = workspace:WaitForChild("Cuteeeee1587")
 local myRoot = char:WaitForChild("HumanoidRootPart")
@@ -33,18 +33,17 @@ searchButton.TextScaled = true
 searchButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
 searchButton.TextColor3 = Color3.new(1, 1, 1)
 
--- Server hop toggle button
+-- Server hop button
 local hopButton = Instance.new("TextButton", gui)
-hopButton.Size = UDim2.new(0, 200, 0, 40)
+hopButton.Size = UDim2.new(0, 200, 0, 50)
 hopButton.Position = UDim2.new(0.5, -100, 0, 220)
-hopButton.Text = "Server Hop: OFF"
+hopButton.Text = "Server Hop"
 hopButton.TextScaled = true
 hopButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 hopButton.TextColor3 = Color3.new(1, 1, 1)
 
 -- Toggles
 local searching = false
-local serverHopEnabled = false
 
 -- Helper: teleport enemy in front
 local function teleportEnemyInFront(enemyRoot)
@@ -115,11 +114,6 @@ local function startSearchLoop()
 
     label.Text = "No match found after all maps"
     print("No match found")
-
-    if serverHopEnabled then
-        label.Text = "Hopping to new server..."
-        serverHop()
-    end
 end
 
 -- Search toggle
@@ -135,9 +129,8 @@ searchButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Server hop toggle
+-- Server hop button
 hopButton.MouseButton1Click:Connect(function()
-    serverHopEnabled = not serverHopEnabled
-    hopButton.Text = "Server Hop: " .. (serverHopEnabled and "ON" or "OFF")
-    hopButton.BackgroundColor3 = serverHopEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(100, 100, 100)
+    label.Text = "Hopping to new server..."
+    serverHop()
 end)
