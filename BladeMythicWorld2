@@ -1,0 +1,143 @@
+-- Config
+local targetNames = {"Muzan", "Roger", "Kurama"}
+local player = game.Players.LocalPlayer
+local char = workspace:WaitForChild("Cuteeeee1587")
+local myRoot = char:WaitForChild("HumanoidRootPart")
+
+local teleportRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("LocalPlayerTeleport")
+local teleportService = game:GetService("TeleportService")
+local maps = {
+    50020, 50021, 50022, 50023, 50024, 50025,
+    50026, 50027, 50028, 50029, 50030
+}
+
+-- GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "EnemyFinderGUI"
+gui.ResetOnSpawn = false
+
+local label = Instance.new("TextLabel", gui)
+label.Size = UDim2.new(0, 300, 0, 50)
+label.Position = UDim2.new(0.5, -150, 0, 100)
+label.TextScaled = true
+label.Text = "Toggle to start search"
+label.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+label.TextColor3 = Color3.new(1, 1, 1)
+
+-- Search toggle button
+local searchButton = Instance.new("TextButton", gui)
+searchButton.Size = UDim2.new(0, 200, 0, 50)
+searchButton.Position = UDim2.new(0.5, -100, 0, 160)
+searchButton.Text = "Start Search"
+searchButton.TextScaled = true
+searchButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+searchButton.TextColor3 = Color3.new(1, 1, 1)
+
+-- Server hop toggle button
+local hopButton = Instance.new("TextButton", gui)
+hopButton.Size = UDim2.new(0, 200, 0, 40)
+hopButton.Position = UDim2.new(0.5, -100, 0, 220)
+hopButton.Text = "Server Hop: OFF"
+hopButton.TextScaled = true
+hopButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+hopButton.TextColor3 = Color3.new(1, 1, 1)
+
+-- Toggles
+local searching = false
+local serverHopEnabled = false
+
+-- Helper: teleport enemy in front
+local function teleportEnemyInFront(enemyRoot)
+    enemyRoot.CFrame = myRoot.CFrame * CFrame.new(0, 0, -5)
+end
+
+-- Helper: search for enemies in current map
+local function searchInMap()
+    for _, model in pairs(workspace.Enemys:GetChildren()) do
+        if model:IsA("Model") and model:FindFirstChild("HumanoidRootPart") then
+            for _, target in ipairs(targetNames) do
+                if string.find(model.Name, target) then
+                    label.Text = "Found: " .. model.Name
+                    print("Found:", model.Name)
+                    teleportEnemyInFront(model.HumanoidRootPart)
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- Helper: teleport to a random server
+local function serverHop()
+    local placeId = game.PlaceId
+    local servers = {}
+    local success, response = pcall(function()
+        return game.HttpService:JSONDecode(
+            game:HttpGet("https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100")
+        )
+    end)
+
+    if success and response and response.data then
+        for _, server in ipairs(response.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                table.insert(servers, server.id)
+            end
+        end
+    end
+
+    if #servers > 0 then
+        local randomServerId = servers[math.random(1, #servers)]
+        teleportService:TeleportToPlaceInstance(placeId, randomServerId, player)
+    else
+        label.Text = "No other servers found"
+        print("No other servers found")
+    end
+end
+
+-- Search loop
+local function startSearchLoop()
+    for _, mapId in ipairs(maps) do
+        if not searching then break end
+
+        label.Text = "Searching Map ID: " .. mapId
+        print("Teleporting to Map:", mapId)
+        teleportRemote:FireServer({["mapId"] = mapId})
+
+        task.wait(1) -- wait for teleport
+
+        if searchInMap() then
+            return
+        end
+
+        task.wait(1)
+    end
+
+    label.Text = "No match found after all maps"
+    print("No match found")
+
+    if serverHopEnabled then
+        label.Text = "Hopping to new server..."
+        serverHop()
+    end
+end
+
+-- Search toggle
+searchButton.MouseButton1Click:Connect(function()
+    searching = not searching
+    if searching then
+        searchButton.Text = "Stop Search"
+        label.Text = "Searching..."
+        task.spawn(startSearchLoop)
+    else
+        searchButton.Text = "Start Search"
+        label.Text = "Search stopped"
+    end
+end)
+
+-- Server hop toggle
+hopButton.MouseButton1Click:Connect(function()
+    serverHopEnabled = not serverHopEnabled
+    hopButton.Text = "Server Hop: " .. (serverHopEnabled and "ON" or "OFF")
+    hopButton.BackgroundColor3 = serverHopEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(100, 100, 100)
+end)
